@@ -33,10 +33,11 @@ export default function App() {
     [participants, localId, localPosition]
   )
 
-  useSpatialAudio(remoteAudioStreams, displayParticipants, localId, HEARING_RADIUS)
+  const { initAudio } = useSpatialAudio(remoteAudioStreams, displayParticipants, localId, HEARING_RADIUS)
 
   async function handleJoin() {
     if (!roomId.trim() || !name.trim()) return
+    initAudio()
     setLocalPosition({ x: 0, y: 0 })
     await join(roomId.trim(), name.trim())
   }
@@ -94,7 +95,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [joined, handleMove])
 
-  const dpadBtn = "h-9 w-9 bg-accent/40 border border-border/60 text-slate-300 hover:text-foreground hover:bg-accent disabled:opacity-30"
+  const dpadBtn = "h-10 w-10 sm:h-9 sm:w-9 bg-accent/40 border border-border/60 text-slate-300 hover:text-foreground hover:bg-accent disabled:opacity-30"
 
   const mediaToggle = (active: boolean) => cn(
     "h-8 px-3 gap-1.5 text-sm border transition-all duration-150",
@@ -107,7 +108,7 @@ export default function App() {
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
 
       {/* Header */}
-      <header className="flex items-center px-5 py-2.5 border-b border-border bg-card/60 backdrop-blur-sm shrink-0">
+      <header className="flex items-center px-3 sm:px-5 py-2.5 border-b border-border bg-card/60 backdrop-blur-sm shrink-0">
 
         {/* Left — app title / room label + copy */}
         {joined ? (

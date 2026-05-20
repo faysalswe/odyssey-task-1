@@ -97,6 +97,9 @@ export function registerHandlers(
   socket.on('join-room', ({ roomId, name }, callback) => {
     try {
       roomManager.setIdentity(roomId, socket.id, name)
+      for (const p of roomManager.getExistingProducers(roomId, socket.id)) {
+        socket.emit('new-producer', { producerId: p.producerId, socketId: p.socketId, kind: p.kind })
+      }
       io.to(roomId).emit('room-state', roomManager.getParticipants(roomId))
       console.log(`[room] ${name} joined ${roomId}`)
       callback({})

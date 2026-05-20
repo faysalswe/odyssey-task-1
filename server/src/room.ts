@@ -113,6 +113,19 @@ export class RoomManager {
     return true
   }
 
+  getExistingProducers(roomId: string, excludeSocketId: string): { producerId: string; socketId: string; kind: types.MediaKind }[] {
+    const room = this.rooms.get(roomId)
+    if (!room) return []
+    const result: { producerId: string; socketId: string; kind: types.MediaKind }[] = []
+    for (const [sid, member] of room.members) {
+      if (sid === excludeSocketId) continue
+      for (const [pid, producer] of member.producers) {
+        result.push({ producerId: pid, socketId: sid, kind: producer.kind })
+      }
+    }
+    return result
+  }
+
   getParticipants(roomId: string): Participant[] {
     const room = this.rooms.get(roomId)
     if (!room) return []

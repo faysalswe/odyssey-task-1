@@ -43,7 +43,7 @@ export function useMediasoup(socket: AppSocket) {
             roomId: roomIdRef.current,
             transportId: recvTransportRef.current!.id,
             producerId,
-            rtpCapabilities: deviceRef.current!.rtpCapabilities,
+            rtpCapabilities: deviceRef.current!.recvRtpCapabilities,
           }, resolve)
         })
         if ('error' in result) { console.error('[consume]', result.error); return }

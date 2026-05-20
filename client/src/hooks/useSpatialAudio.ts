@@ -1,35 +1,45 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { calculateGain } from '@/lib/audio'
 import type { Participant } from '@/types'
 
-type AudioNodes = { source: MediaStreamAudioSourceNode; gain: GainNode }
+type AudioNodes = { source: MediaStreamAudioSourceNode; gain: GainNode; stream: MediaStream }
 
 export function useSpatialAudio(
   remoteStreams: Map<string, MediaStream>,
   participants: Participant[],
   localId: string,
   hearingRadius: number
-): void {
+): { initAudio: () => void } {
   const audioCtxRef = useRef<AudioContext | null>(null)
   const nodesRef = useRef(new Map<string, AudioNodes>())
+
+  // Call this from a user-gesture handler (e.g. Join click) so Chrome allows playback
+  const initAudio = useCallback(() => {
+    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext()
+    void audioCtxRef.current.resume()
+  }, [])
 
   useEffect(() => {
     if (remoteStreams.size === 0) return
 
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new AudioContext()
-    }
+    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext()
     const ctx = audioCtxRef.current
-    if (ctx.state === 'suspended') void ctx.resume()
+    void ctx.resume()
 
-    // Add nodes for new streams
+    // Add nodes for new streams; replace if stream object changed (e.g. producer restarted)
     for (const [socketId, stream] of remoteStreams) {
-      if (nodesRef.current.has(socketId)) continue
+      const existing = nodesRef.current.get(socketId)
+      if (existing?.stream === stream) continue
+      if (existing) {
+        existing.source.disconnect()
+        existing.gain.disconnect()
+        nodesRef.current.delete(socketId)
+      }
       const source = ctx.createMediaStreamSource(stream)
       const gain = ctx.createGain()
       source.connect(gain)
       gain.connect(ctx.destination)
-      nodesRef.current.set(socketId, { source, gain })
+      nodesRef.current.set(socketId, { source, gain, stream })
     }
 
     // Remove nodes for streams that are gone
@@ -56,4 +66,6 @@ export function useSpatialAudio(
   useEffect(() => {
     return () => { audioCtxRef.current?.close() }
   }, [])
+
+  return { initAudio }
 }
