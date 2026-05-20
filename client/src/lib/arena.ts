@@ -2,6 +2,7 @@ import type { Position } from '@/types'
 
 export const ARENA_RADIUS = 200
 export const STEP_SIZE = 10
+export const HEARING_RADIUS = 150
 
 export function clampToCircle(pos: Position, dx: number, dy: number): Position {
   const x = pos.x + dx
