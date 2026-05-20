@@ -2,7 +2,7 @@ import { createRouter } from './mediasoup'
 import type { types } from 'mediasoup'
 import type { Participant, Position } from './types'
 
-export const ARENA_RADIUS = 200
+export const ARENA_RADIUS = 350
 
 // Full internal object — identity + media plumbing together
 type Member = {
@@ -101,7 +101,7 @@ export class RoomManager {
     const member = this.rooms.get(roomId)?.members.get(socketId)
     if (!member) return false
     const { x, y } = position
-    if (x * x + y * y > ARENA_RADIUS * ARENA_RADIUS) return false
+    if (Math.abs(x) > ARENA_RADIUS || Math.abs(y) > ARENA_RADIUS) return false
     member.position = position
     return true
   }
