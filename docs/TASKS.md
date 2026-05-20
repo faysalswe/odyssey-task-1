@@ -65,13 +65,13 @@ Build a real-time spatial audio/video room: users join a room, appear as dots on
 ---
 
 ### Task 6 — Circular arena map component
-- [ ] Create `ArenaMap.tsx` using SVG (400–500 px diameter)
-- [ ] Render a circle boundary as the arena
-- [ ] Map each participant to a colored `<circle>` dot + `<text>` name label
-- [ ] Own dot: distinct color, slightly larger radius
-- [ ] Faint `<circle>` around own dot = hearing range indicator
-- [ ] When `micActive === true`, apply Tailwind `animate-pulse` + a drop-shadow filter to that dot
-- [ ] Accept props: `participants`, `localId`, `hearingRadius`
+- [x] Create `ArenaMap.tsx` using SVG (400–500 px diameter)
+- [x] Render a circle boundary as the arena
+- [x] Map each participant to a colored `<circle>` dot + `<text>` name label
+- [x] Own dot: distinct color, slightly larger radius
+- [x] Faint `<circle>` around own dot = hearing range indicator
+- [x] When `micActive === true`, apply Tailwind `animate-pulse` + a drop-shadow filter to that dot
+- [x] Accept props: `participants`, `localId`, `hearingRadius`
 
 ---
 
@@ -80,48 +80,48 @@ Build a real-time spatial audio/video room: users join a room, appear as dots on
 - [x] On press: compute new `{ x, y }` by adding a step delta
 - [x] Clamp: if `x²+y² > r²`, project back onto the circle boundary
 - [x] Update local state immediately (optimistic UI)
-- [ ] Emit `move` event to server with new position
+- [x] Emit `move` event to server with new position
 - [x] Wire keyboard arrow keys as an alternative input
 
 ---
 
 ### Task 8 — mediasoup-client WebRTC integration
-- [ ] On join: fetch RTP capabilities from server (`getRouterRtpCapabilities`)
-- [ ] Load `Device` with router capabilities
-- [ ] Create a **send Transport** (for mic/camera producers)
-- [ ] Create a **receive Transport** (for remote consumers)
-- [ ] Connect transports on `connect` event (send DTLS params to server)
-- [ ] On new remote producer notification, create a **Consumer** and attach stream
-- [ ] Clean up all transports/producers/consumers on leave
+- [x] On join: fetch RTP capabilities from server (`getRouterRtpCapabilities`)
+- [x] Load `Device` with router capabilities
+- [x] Create a **send Transport** (for mic/camera producers)
+- [x] Create a **receive Transport** (for remote consumers)
+- [x] Connect transports on `connect` event (send DTLS params to server)
+- [x] On new remote producer notification, create a **Consumer** and attach stream
+- [x] Clean up all transports/producers/consumers on leave
 
 ---
 
 ### Task 9 — Spatial audio with Web Audio API
-- [ ] Create a single `AudioContext` on first join
-- [ ] For each remote audio consumer: `MediaStreamSource → GainNode → destination`
-- [ ] On every position update, compute Euclidean distance between own dot and remote dot
-- [ ] Set `gainNode.gain.value`:
+- [x] Create a single `AudioContext` on first join
+- [x] For each remote audio consumer: `MediaStreamSource → GainNode → destination`
+- [x] On every position update, compute Euclidean distance between own dot and remote dot
+- [x] Set `gainNode.gain.value`:
   - `1.0` at distance 0
   - Linear falloff to `0.0` at `hearingRadius`
   - `0.0` beyond hearing range (silence)
-- [ ] Update all gain nodes whenever positions change
+- [x] Update all gain nodes whenever positions change
 
 ---
 
 ### Task 10 — Mic toggle
-- [ ] Add 🎙️ Mic button (toggle on/off)
-- [ ] **On:** `getUserMedia({ audio: true })` → create mediasoup audio **Producer** → emit `mic-on`
-- [ ] **Off:** stop audio track → close Producer → emit `mic-off`
-- [ ] Show active state visually on the button
+- [x] Add 🎙️ Mic button (toggle on/off)
+- [x] **On:** `getUserMedia({ audio: true })` → create mediasoup audio **Producer** → emit `mic-on`
+- [x] **Off:** stop audio track → close Producer → emit `mic-off`
+- [x] Show active state visually on the button
 
 ---
 
 ### Task 11 — Camera toggle and video tiles
-- [ ] Add 📷 Camera button (toggle on/off)
-- [ ] **On:** `getUserMedia({ video: true })` → show own video preview tile → create mediasoup video **Producer**
-- [ ] Render remote participant video streams as small tiles alongside the arena map
-- [ ] **Off:** stop video track → close Producer → remove own preview tile
-- [ ] Show active state visually on the button
+- [x] Add 📷 Camera button (toggle on/off)
+- [x] **On:** `getUserMedia({ video: true })` → show own video preview tile → create mediasoup video **Producer**
+- [x] Render remote participant video streams as small tiles alongside the arena map
+- [x] **Off:** stop video track → close Producer → remove own preview tile
+- [x] Show active state visually on the button
 
 ---
 

@@ -8,15 +8,21 @@ export function useMediasoup(socket: AppSocket) {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [localId, setLocalId] = useState('')
   const [joined, setJoined] = useState(false)
-  const [remoteStreams, setRemoteStreams] = useState(new Map<string, MediaStream>())
+  const [remoteAudioStreams, setRemoteAudioStreams] = useState(new Map<string, MediaStream>())
+  const [remoteVideoStreams, setRemoteVideoStreams] = useState(new Map<string, MediaStream>())
+  const [localVideoStream, setLocalVideoStream] = useState<MediaStream | null>(null)
 
   const roomIdRef = useRef('')
   const deviceRef = useRef<Device | null>(null)
   const sendTransportRef = useRef<types.Transport | null>(null)
   const recvTransportRef = useRef<types.Transport | null>(null)
   const audioProducerRef = useRef<types.Producer | null>(null)
+  const audioTrackRef = useRef<MediaStreamTrack | null>(null)
+  const videoProducerRef = useRef<types.Producer | null>(null)
+  const videoTrackRef = useRef<MediaStreamTrack | null>(null)
   const consumersRef = useRef(new Map<string, types.Consumer>())
-  const remoteStreamsRef = useRef(new Map<string, MediaStream>())
+  const remoteAudioStreamsRef = useRef(new Map<string, MediaStream>())
+  const remoteVideoStreamsRef = useRef(new Map<string, MediaStream>())
 
   useEffect(() => {
     function onRoomState(ps: Participant[]) {
@@ -29,7 +35,7 @@ export function useMediasoup(socket: AppSocket) {
   }, [socket])
 
   useEffect(() => {
-    async function onNewProducer({ producerId, socketId }: { producerId: string; socketId: string; kind: types.MediaKind }) {
+    async function onNewProducer({ producerId, socketId, kind }: { producerId: string; socketId: string; kind: types.MediaKind }) {
       if (!recvTransportRef.current || !deviceRef.current || !roomIdRef.current) return
       try {
         const result = await new Promise<ConsumerParams | { error: string }>((resolve) => {
@@ -45,8 +51,14 @@ export function useMediasoup(socket: AppSocket) {
         const consumer = await recvTransportRef.current.consume(result)
         consumersRef.current.set(consumer.id, consumer)
         const stream = new MediaStream([consumer.track])
-        remoteStreamsRef.current = new Map(remoteStreamsRef.current).set(socketId, stream)
-        setRemoteStreams(new Map(remoteStreamsRef.current))
+
+        if (kind === 'audio') {
+          remoteAudioStreamsRef.current = new Map(remoteAudioStreamsRef.current).set(socketId, stream)
+          setRemoteAudioStreams(new Map(remoteAudioStreamsRef.current))
+        } else {
+          remoteVideoStreamsRef.current = new Map(remoteVideoStreamsRef.current).set(socketId, stream)
+          setRemoteVideoStreams(new Map(remoteVideoStreamsRef.current))
+        }
       } catch (err) {
         console.error('[new-producer]', err)
       }
@@ -76,12 +88,12 @@ export function useMediasoup(socket: AppSocket) {
       sendTransportRef.current = sendTransport
       sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
         socket.emit('connect-transport', { transportId: sendTransport.id, dtlsParameters }, (res) => {
-          res.error ? errback(new Error(res.error)) : callback()
+          if (res.error) errback(new Error(res.error)); else callback()
         })
       })
       sendTransport.on('produce', ({ kind, rtpParameters }, callback, errback) => {
         socket.emit('produce', { transportId: sendTransport.id, kind, rtpParameters }, (res) => {
-          'error' in res ? errback(new Error(res.error)) : callback({ id: res.id })
+          if ('error' in res) errback(new Error(res.error)); else callback({ id: res.id })
         })
       })
 
@@ -94,58 +106,96 @@ export function useMediasoup(socket: AppSocket) {
       recvTransportRef.current = recvTransport
       recvTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
         socket.emit('connect-transport', { transportId: recvTransport.id, dtlsParameters }, (res) => {
-          res.error ? errback(new Error(res.error)) : callback()
+          if (res.error) errback(new Error(res.error)); else callback()
         })
       })
 
       await new Promise<void>((resolve, reject) => {
         socket.emit('join-room', { roomId, name }, (res) => {
-          res.error ? reject(new Error(res.error)) : resolve()
+          if (res.error) reject(new Error(res.error)); else resolve()
         })
       })
 
       setJoined(true)
     } catch (err) {
       console.error('[join]', err)
+      sendTransportRef.current?.close()
+      recvTransportRef.current?.close()
+      sendTransportRef.current = null
+      recvTransportRef.current = null
+      deviceRef.current = null
+      roomIdRef.current = ''
     }
   }, [socket])
 
   const leave = useCallback(() => {
     socket.emit('leave-room')
     audioProducerRef.current?.close()
+    audioTrackRef.current?.stop()
+    audioTrackRef.current = null
+    videoProducerRef.current?.close()
+    videoTrackRef.current?.stop()
+    videoTrackRef.current = null
     consumersRef.current.forEach(c => c.close())
     consumersRef.current.clear()
     sendTransportRef.current?.close()
     recvTransportRef.current?.close()
-    remoteStreamsRef.current.clear()
+    remoteAudioStreamsRef.current.clear()
+    remoteVideoStreamsRef.current.clear()
     deviceRef.current = null
     sendTransportRef.current = null
     recvTransportRef.current = null
     audioProducerRef.current = null
+    videoProducerRef.current = null
     roomIdRef.current = ''
     setParticipants([])
     setLocalId('')
     setJoined(false)
-    setRemoteStreams(new Map())
+    setLocalVideoStream(null)
+    setRemoteAudioStreams(new Map())
+    setRemoteVideoStreams(new Map())
   }, [socket])
 
-  const produceAudio = useCallback(async (): Promise<MediaStream | null> => {
-    if (!sendTransportRef.current) return null
+  const produceAudio = useCallback(async (): Promise<void> => {
+    if (!sendTransportRef.current) return
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const track = stream.getAudioTracks()[0]
+      audioTrackRef.current = track
       const producer = await sendTransportRef.current.produce({ track })
       audioProducerRef.current = producer
-      return stream
     } catch (err) {
       console.error('[produce-audio]', err)
-      return null
     }
   }, [])
 
   const stopAudio = useCallback(() => {
     audioProducerRef.current?.close()
     audioProducerRef.current = null
+    audioTrackRef.current?.stop()
+    audioTrackRef.current = null
+  }, [])
+
+  const produceVideo = useCallback(async (): Promise<void> => {
+    if (!sendTransportRef.current) return
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      const track = stream.getVideoTracks()[0]
+      videoTrackRef.current = track
+      const producer = await sendTransportRef.current.produce({ track })
+      videoProducerRef.current = producer
+      setLocalVideoStream(stream)
+    } catch (err) {
+      console.error('[produce-video]', err)
+    }
+  }, [])
+
+  const stopVideo = useCallback(() => {
+    videoProducerRef.current?.close()
+    videoProducerRef.current = null
+    videoTrackRef.current?.stop()
+    videoTrackRef.current = null
+    setLocalVideoStream(null)
   }, [])
 
   const emitMove = useCallback((position: Position) => {
@@ -156,5 +206,12 @@ export function useMediasoup(socket: AppSocket) {
     socket.emit('mic-status', micActive)
   }, [socket])
 
-  return { participants, localId, joined, join, leave, produceAudio, stopAudio, emitMove, emitMicStatus, remoteStreams }
+  return {
+    participants, localId, joined,
+    join, leave,
+    produceAudio, stopAudio,
+    produceVideo, stopVideo, localVideoStream,
+    emitMove, emitMicStatus,
+    remoteAudioStreams, remoteVideoStreams,
+  }
 }

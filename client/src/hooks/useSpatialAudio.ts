@@ -53,21 +53,6 @@ export function useSpatialAudio(
     }
   }, [remoteStreams, participants, localId, hearingRadius])
 
-  // Re-run gain calculation on every position update (no stream changes)
-  useEffect(() => {
-    if (!audioCtxRef.current) return
-    const local = participants.find(p => p.id === localId)
-    if (!local) return
-
-    for (const [socketId, nodes] of nodesRef.current) {
-      const remote = participants.find(p => p.socketId === socketId)
-      if (!remote) { nodes.gain.gain.value = 0; continue }
-      const dx = remote.position.x - local.position.x
-      const dy = remote.position.y - local.position.y
-      nodes.gain.gain.value = calculateGain(Math.sqrt(dx * dx + dy * dy), hearingRadius)
-    }
-  }, [participants, localId, hearingRadius])
-
   useEffect(() => {
     return () => { audioCtxRef.current?.close() }
   }, [])

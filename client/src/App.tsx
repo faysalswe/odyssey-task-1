@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Toggle } from '@/components/ui/toggle'
 import ArenaMap from '@/components/ArenaMap'
+import VideoTile from '@/components/VideoTile'
 import { useSocket } from '@/hooks/useSocket'
 import { useMediasoup } from '@/hooks/useMediasoup'
 import { useSpatialAudio } from '@/hooks/useSpatialAudio'
@@ -12,7 +13,7 @@ import type { Position } from '@/types'
 
 export default function App() {
   const socket = useSocket()
-  const { participants, localId, joined, join, leave, produceAudio, stopAudio, emitMove, emitMicStatus, remoteStreams } = useMediasoup(socket)
+  const { participants, localId, joined, join, leave, produceAudio, stopAudio, produceVideo, stopVideo, localVideoStream, emitMove, emitMicStatus, remoteAudioStreams, remoteVideoStreams } = useMediasoup(socket)
 
   const [roomId, setRoomId] = useState('')
   const [name, setName] = useState('')
@@ -26,7 +27,7 @@ export default function App() {
     [participants, localId, localPosition]
   )
 
-  useSpatialAudio(remoteStreams, displayParticipants, localId, HEARING_RADIUS)
+  useSpatialAudio(remoteAudioStreams, displayParticipants, localId, HEARING_RADIUS)
 
   async function handleJoin() {
     if (!roomId.trim() || !name.trim()) return
@@ -54,6 +55,12 @@ export default function App() {
     emitMicStatus(on)
     if (on) await produceAudio()
     else stopAudio()
+  }
+
+  async function handleCameraToggle(on: boolean) {
+    setCameraOn(on)
+    if (on) await produceVideo()
+    else stopVideo()
   }
 
   useEffect(() => {
@@ -101,9 +108,9 @@ export default function App() {
         </Button>
       </header>
 
-      {/* Main — arena map */}
-      <main className="flex flex-1 items-center justify-center p-6">
-        <Card className="w-[480px] h-[480px]">
+      {/* Main — arena map + video tiles */}
+      <main className="flex flex-1 items-center justify-center gap-4 p-6">
+        <Card className="w-[480px] h-[480px] shrink-0">
           <CardContent className="w-full h-full p-4">
             {joined
               ? <ArenaMap participants={displayParticipants} localId={localId} hearingRadius={HEARING_RADIUS} />
@@ -111,6 +118,19 @@ export default function App() {
             }
           </CardContent>
         </Card>
+
+        {/* Video tiles */}
+        {joined && (
+          <div className="flex flex-col gap-2">
+            {localVideoStream && (
+              <VideoTile stream={localVideoStream} name="You" muted />
+            )}
+            {[...remoteVideoStreams.entries()].map(([socketId, stream]) => {
+              const peer = participants.find(p => p.socketId === socketId)
+              return <VideoTile key={socketId} stream={stream} name={peer?.name} />
+            })}
+          </div>
+        )}
       </main>
 
       {/* Footer — controls */}
@@ -139,7 +159,7 @@ export default function App() {
 
         <Toggle
           pressed={cameraOn}
-          onPressedChange={setCameraOn}
+          onPressedChange={handleCameraToggle}
           disabled={!joined}
           aria-label="Toggle camera"
           variant="outline"
