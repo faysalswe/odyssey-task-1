@@ -10,54 +10,54 @@ Build a real-time spatial audio/video room: users join a room, appear as dots on
 ## Part A — Server
 
 ### Task 1 — Initialize monorepo structure
-- [ ] Create root directory with `/server` and `/client` sub-folders
-- [ ] `git init` at the root
-- [ ] Add root `.gitignore` (node_modules, dist, .env, build artifacts)
-- [ ] Add root `README.md` with project overview and setup instructions
+- [x] Create root directory with `/server` and `/client` sub-folders
+- [x] `git init` at the root
+- [x] Add root `.gitignore` (node_modules, dist, .env, build artifacts)
+- [x] Add root `README.md` with project overview and setup instructions
 
 ---
 
 ### Task 2 — Scaffold Node.js server
-- [ ] `npm init` inside `/server`, add TypeScript if desired
-- [ ] Install dependencies: `mediasoup`, `socket.io`, `express`, `dotenv`
-- [ ] Create `src/index.ts` — Express app + HTTP server + Socket.io attachment
-- [ ] Add `GET /health` endpoint returning `200 OK`
-- [ ] Add `npm run dev` and `npm run build` scripts
+- [x] `npm init` inside `/server`, add TypeScript if desired
+- [x] Install dependencies: `mediasoup`, `socket.io`, `express`, `dotenv`
+- [x] Create `src/index.ts` — Express app + HTTP server + Socket.io attachment
+- [x] Add `GET /health` endpoint returning `200 OK`
+- [x] Add `npm run dev` and `npm run build` scripts
 
 ---
 
 ### Task 3 — mediasoup Worker, Router, and WebRTC transport lifecycle
-- [ ] Create a mediasoup **Worker** on server startup
-- [ ] Per room, create a **Router** with audio + video codecs (opus, VP8)
-- [ ] Handle Socket.io event `createWebRtcTransport` → return ICE/DTLS params to client
-- [ ] Handle `connectTransport` → finalize DTLS handshake
-- [ ] Handle `produce` → create a **Producer**, notify other peers in the room
-- [ ] Handle `consume` → create a **Consumer** for a remote producer, return params
-- [ ] On socket disconnect → close transports, producers, consumers; clean up room state
+- [x] Create a mediasoup **Worker** on server startup
+- [x] Per room, create a **Router** with audio + video codecs (opus, VP8)
+- [x] Handle Socket.io event `createWebRtcTransport` → return ICE/DTLS params to client
+- [x] Handle `connectTransport` → finalize DTLS handshake
+- [x] Handle `produce` → create a **Producer**, notify other peers in the room
+- [x] Handle `consume` → create a **Consumer** for a remote producer, return params
+- [x] On socket disconnect → close transports, producers, consumers; clean up room state
 
 ---
 
 ### Task 4 — Room and participant position management
-- [ ] Track rooms as a `Map<roomId, Room>` in memory
-- [ ] Each participant stores: `id`, `name`, `position { x, y }`, `socketId`, `micActive`
-- [ ] Handle `join-room` event: add participant, broadcast `room-state` to all peers
-- [ ] Handle `leave-room` / disconnect: remove participant, broadcast updated state
-- [ ] Handle `move` event: validate position stays inside circle (`x²+y² ≤ r²`), update, broadcast
-- [ ] Handle `mic-status` event: update `micActive` flag, broadcast to peers
-- [ ] Add `GET /rooms/:roomId/participants` endpoint returning participants + positions
+- [x] Track rooms as a `Map<roomId, Room>` in memory
+- [x] Each participant stores: `id`, `name`, `position { x, y }`, `socketId`, `micActive`
+- [x] Handle `join-room` event: add participant, broadcast `room-state` to all peers
+- [x] Handle `leave-room` / disconnect: remove participant, broadcast updated state
+- [x] Handle `move` event: validate position stays inside circle (`x²+y² ≤ r²`), update, broadcast
+- [x] Handle `mic-status` event: update `micActive` flag, broadcast to peers
+- [x] Add `GET /rooms/:roomId/participants` endpoint returning participants + positions
 
 ---
 
 ## Part B — Frontend
 
 ### Task 5 — Scaffold React + TypeScript + Vite client
-- [ ] `npm create vite@latest client -- --template react-ts`
-- [ ] Install Tailwind CSS v4: `npm install tailwindcss @tailwindcss/vite` and configure `vite.config.ts`
-- [ ] Init shadcn/ui: `npx shadcn@latest init` (choose default style, Tailwind CSS vars)
-- [ ] Add base shadcn components: `npx shadcn@latest add button input card badge toggle tooltip`
-- [ ] Install: `socket.io-client`, `mediasoup-client`
-- [ ] Add `.env.local` with `VITE_SERVER_URL=http://localhost:3000`
-- [ ] Create `App.tsx` shell with three-panel layout using shadcn `Card` + Tailwind:
+- [x] `npm create vite@latest client -- --template react-ts`
+- [x] Install Tailwind CSS v4: `npm install tailwindcss @tailwindcss/vite` and configure `vite.config.ts`
+- [x] Init shadcn/ui: `npx shadcn@latest init` (choose default style, Tailwind CSS vars)
+- [x] Add base shadcn components: `npx shadcn@latest add button input card badge toggle tooltip`
+- [x] Install: `socket.io-client`, `mediasoup-client`
+- [x] Add `.env.local` with `VITE_SERVER_URL=http://localhost:3000`
+- [x] Create `App.tsx` shell with three-panel layout using shadcn `Card` + Tailwind:
   - Header: `Input` (room), `Input` (name), `Button` (Join), `Button` (Leave)
   - Main: arena map placeholder inside a `Card`
   - Footer: direction buttons + Mic `Toggle` + Camera `Toggle`

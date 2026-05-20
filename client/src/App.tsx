@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Toggle } from '@/components/ui/toggle'
+import ArenaMap from '@/components/ArenaMap'
+import type { Participant } from '@/types'
 
 export default function App() {
   const [roomId, setRoomId] = useState('')
@@ -10,16 +12,20 @@ export default function App() {
   const [joined, setJoined] = useState(false)
   const [micOn, setMicOn] = useState(false)
   const [cameraOn, setCameraOn] = useState(false)
+  const [localId] = useState(() => crypto.randomUUID())
+  const [participants, setParticipants] = useState<Participant[]>([])
 
   function handleJoin() {
     if (!roomId.trim() || !name.trim()) return
     setJoined(true)
+    setParticipants([{ id: localId, socketId: '', name: name.trim(), position: { x: 0, y: 0 }, micActive: false }])
   }
 
   function handleLeave() {
     setJoined(false)
     setMicOn(false)
     setCameraOn(false)
+    setParticipants([])
   }
 
   return (
@@ -51,13 +57,12 @@ export default function App() {
 
       {/* Main — arena map */}
       <main className="flex flex-1 items-center justify-center p-6">
-        <Card className="w-[480px] h-[480px] flex items-center justify-center">
-          <CardContent className="flex items-center justify-center w-full h-full">
-            <span className="text-muted-foreground text-sm">
-              {joined
-                ? `${name} in "${roomId}" — arena map coming soon`
-                : 'Join a room to see the arena'}
-            </span>
+        <Card className="w-[480px] h-[480px]">
+          <CardContent className="w-full h-full p-4">
+            {joined
+              ? <ArenaMap participants={participants} localId={localId} hearingRadius={150} />
+              : <div className="flex items-center justify-center w-full h-full text-muted-foreground text-sm">Join a room to see the arena</div>
+            }
           </CardContent>
         </Card>
       </main>
