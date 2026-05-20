@@ -43,8 +43,8 @@ export async function createWebRtcTransport(
 ): Promise<types.WebRtcTransport> {
   return router.createWebRtcTransport({
     listenIps: [{ ip: '0.0.0.0', announcedIp: ANNOUNCED_IP }],
-    enableUdp: true,
+    enableUdp: false,
     enableTcp: true,
-    preferUdp: true,
+    preferUdp: false,
   })
 }

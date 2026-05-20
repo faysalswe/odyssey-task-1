@@ -8,6 +8,7 @@ primary_region = 'sin'
   PORT = "3000"
   MEDIASOUP_MIN_PORT = "10000"
   MEDIASOUP_MAX_PORT = "10009"
+  ANNOUNCED_IP = "66.241.124.241"
 
 # mediasoup workers must stay alive between calls — never auto-stop
 [http_service]
@@ -23,63 +24,63 @@ primary_region = 'sin'
   cpu_kind = 'shared'
   cpus = 1
 
-# UDP ports for mediasoup RTP (one entry per port)
+# TCP ports for mediasoup WebRTC transports (shared IP supports TCP only)
 [[services]]
-  protocol = "udp"
+  protocol = "tcp"
   internal_port = 10000
   [[services.ports]]
     port = 10000
 
 [[services]]
-  protocol = "udp"
+  protocol = "tcp"
   internal_port = 10001
   [[services.ports]]
     port = 10001
 
 [[services]]
-  protocol = "udp"
+  protocol = "tcp"
   internal_port = 10002
   [[services.ports]]
     port = 10002
 
 [[services]]
-  protocol = "udp"
+  protocol = "tcp"
   internal_port = 10003
   [[services.ports]]
     port = 10003
 
 [[services]]
-  protocol = "udp"
+  protocol = "tcp"
   internal_port = 10004
   [[services.ports]]
     port = 10004
 
 [[services]]
-  protocol = "udp"
+  protocol = "tcp"
   internal_port = 10005
   [[services.ports]]
     port = 10005
 
 [[services]]
-  protocol = "udp"
+  protocol = "tcp"
   internal_port = 10006
   [[services.ports]]
     port = 10006
 
 [[services]]
-  protocol = "udp"
+  protocol = "tcp"
   internal_port = 10007
   [[services.ports]]
     port = 10007
 
 [[services]]
-  protocol = "udp"
+  protocol = "tcp"
   internal_port = 10008
   [[services.ports]]
     port = 10008
 
 [[services]]
-  protocol = "udp"
+  protocol = "tcp"
   internal_port = 10009
   [[services.ports]]
     port = 10009
