@@ -1,11 +1,14 @@
 import type { types } from 'mediasoup'
 
-export type Peer = {
+export type Position = { x: number; y: number }
+
+// Broadcast shape — what clients receive over the wire
+export type Participant = {
+  id: string
   socketId: string
-  roomId: string | null
-  transports: Map<string, types.WebRtcTransport>
-  producers: Map<string, types.Producer>
-  consumers: Map<string, types.Consumer>
+  name: string
+  position: Position
+  micActive: boolean
 }
 
 export type WebRtcTransportParams = {
@@ -36,30 +39,25 @@ export type ClientToServerEvents = {
     callback: (result: { error?: string }) => void
   ) => void
   produce: (
-    data: {
-      transportId: string
-      kind: types.MediaKind
-      rtpParameters: types.RtpParameters
-    },
+    data: { transportId: string; kind: types.MediaKind; rtpParameters: types.RtpParameters },
     callback: (result: { id: string } | { error: string }) => void
   ) => void
   consume: (
-    data: {
-      roomId: string
-      transportId: string
-      producerId: string
-      rtpCapabilities: types.RtpCapabilities
-    },
+    data: { roomId: string; transportId: string; producerId: string; rtpCapabilities: types.RtpCapabilities },
     callback: (params: ConsumerParams | { error: string }) => void
   ) => void
+  'join-room': (
+    data: { roomId: string; name: string },
+    callback: (result: { error?: string }) => void
+  ) => void
+  'leave-room': () => void
+  move: (position: Position) => void
+  'mic-status': (micActive: boolean) => void
 }
 
 export type ServerToClientEvents = {
-  'new-producer': (data: {
-    producerId: string
-    socketId: string
-    kind: types.MediaKind
-  }) => void
+  'new-producer': (data: { producerId: string; socketId: string; kind: types.MediaKind }) => void
+  'room-state': (participants: Participant[]) => void
 }
 
 export type InterServerEvents = Record<string, never>

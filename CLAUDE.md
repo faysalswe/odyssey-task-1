@@ -35,9 +35,12 @@ odyssey-task-1/
 ├── server/             # Node.js + mediasoup + Socket.io
 │   ├── src/
 │   │   ├── index.ts        # Entry point — HTTP server + Socket.io init
-│   │   ├── room.ts         # Room state, participant management
-│   │   ├── mediasoup.ts    # Worker, Router, Transport, Producer, Consumer
-│   │   └── types.ts        # Shared TypeScript interfaces
+│   │   ├── handlers.ts     # All Socket.io event handlers
+│   │   ├── room.ts         # RoomManager — Room + Member state (identity + media plumbing)
+│   │   ├── mediasoup.ts    # Worker, Router, Transport factory functions
+│   │   └── types.ts        # Participant (broadcast shape) + socket event contracts
+│   ├── tests/
+│   │   └── test-socket.ts  # Socket-level integration tests
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── .env.example
@@ -105,9 +108,21 @@ import { cn } from '@/lib/utils'
 
 ### Server Patterns
 - Each room is isolated: one mediasoup Router per room
-- All room mutation goes through a `RoomManager` class/module — no direct Map access elsewhere
+- All room mutation goes through `RoomManager` — no direct Map access elsewhere
 - Socket event handlers are thin: validate input, delegate to `RoomManager`, emit result
 - Environment config read once at startup via `dotenv`; never read `process.env` mid-request
+
+#### Member vs Participant
+`Member` (internal, defined in `room.ts`) — full object, never leaves the server:
+```ts
+{ id, socketId, name|null, position|null, micActive, transports, producers, consumers }
+```
+`Participant` (broadcast shape, exported from `types.ts`) — serializable, sent to clients:
+```ts
+{ id, socketId, name, position, micActive }
+```
+A `Member` becomes visible as a `Participant` only after `join-room` sets its `name`.
+`getParticipants()` filters `name !== null` and strips media objects before emitting `room-state`.
 
 ### Error Handling
 - Validate at boundaries only: socket event payloads, HTTP query params
