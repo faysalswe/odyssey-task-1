@@ -35,7 +35,7 @@ export function registerHandlers(
   socket.on('create-webrtc-transport', async ({ roomId }, callback) => {
     try {
       const room = await roomManager.getOrCreate(roomId, worker)
-      const transport = await createWebRtcTransport(room.router)
+      const transport = await createWebRtcTransport(room.router, worker)
       roomManager.addTransport(roomId, socket.id, transport)
       callback({
         id: transport.id,

@@ -2,8 +2,7 @@ import * as mediasoup from 'mediasoup'
 import type { types } from 'mediasoup'
 
 const ANNOUNCED_IP = process.env.ANNOUNCED_IP ?? '127.0.0.1'
-const MIN_PORT = Number(process.env.MEDIASOUP_MIN_PORT ?? 10000)
-const MAX_PORT = Number(process.env.MEDIASOUP_MAX_PORT ?? 10100)
+const WEBRTC_SERVER_PORT = Number(process.env.WEBRTC_SERVER_PORT ?? 10000)
 
 const MEDIA_CODECS: types.RtpCodecCapability[] = [
   {
@@ -22,12 +21,19 @@ const MEDIA_CODECS: types.RtpCodecCapability[] = [
   },
 ]
 
+// One WebRtcServer per worker — all transports share a single port
+const webRtcServers = new Map<number, types.WebRtcServer>()
+
 export async function createWorker(): Promise<types.Worker> {
-  const worker = await mediasoup.createWorker({
-    rtcMinPort: MIN_PORT,
-    rtcMaxPort: MAX_PORT,
+  const worker = await mediasoup.createWorker()
+  const webRtcServer = await worker.createWebRtcServer({
+    listenInfos: [
+      { protocol: 'tcp', ip: '0.0.0.0', announcedIp: ANNOUNCED_IP, port: WEBRTC_SERVER_PORT },
+    ],
   })
+  webRtcServers.set(worker.pid, webRtcServer)
   worker.on('died', (error) => {
+    webRtcServers.delete(worker.pid)
     console.error('[mediasoup] worker died:', error)
     process.exit(1)
   })
@@ -39,12 +45,10 @@ export async function createRouter(worker: types.Worker): Promise<types.Router> 
 }
 
 export async function createWebRtcTransport(
-  router: types.Router
+  router: types.Router,
+  worker: types.Worker
 ): Promise<types.WebRtcTransport> {
-  return router.createWebRtcTransport({
-    listenIps: [{ ip: '0.0.0.0', announcedIp: ANNOUNCED_IP }],
-    enableUdp: false,
-    enableTcp: true,
-    preferUdp: false,
-  })
+  const webRtcServer = webRtcServers.get(worker.pid)
+  if (!webRtcServer) throw new Error('WebRtcServer not found for worker')
+  return router.createWebRtcTransport({ webRtcServer })
 }
