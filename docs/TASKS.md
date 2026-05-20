@@ -76,12 +76,12 @@ Build a real-time spatial audio/video room: users join a room, appear as dots on
 ---
 
 ### Task 7 — Direction buttons and boundary-clamped movement
-- [ ] Render ▲ ▼ ◄ ► buttons below the map
-- [ ] On press: compute new `{ x, y }` by adding a step delta
-- [ ] Clamp: if `x²+y² > r²`, project back onto the circle boundary
-- [ ] Update local state immediately (optimistic UI)
+- [x] Render ▲ ▼ ◄ ► buttons below the map
+- [x] On press: compute new `{ x, y }` by adding a step delta
+- [x] Clamp: if `x²+y² > r²`, project back onto the circle boundary
+- [x] Update local state immediately (optimistic UI)
 - [ ] Emit `move` event to server with new position
-- [ ] Wire keyboard arrow keys as an alternative input
+- [x] Wire keyboard arrow keys as an alternative input
 
 ---
 

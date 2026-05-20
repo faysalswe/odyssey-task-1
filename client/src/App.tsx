@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Toggle } from '@/components/ui/toggle'
 import ArenaMap from '@/components/ArenaMap'
 import type { Participant } from '@/types'
+import { clampToCircle, STEP_SIZE } from '@/lib/arena'
 
 export default function App() {
   const [roomId, setRoomId] = useState('')
@@ -14,6 +15,32 @@ export default function App() {
   const [cameraOn, setCameraOn] = useState(false)
   const [localId] = useState(() => crypto.randomUUID())
   const [participants, setParticipants] = useState<Participant[]>([])
+
+  const handleMove = useCallback((dx: number, dy: number) => {
+    setParticipants(prev => prev.map(p => {
+      if (p.id !== localId) return p
+      return { ...p, position: clampToCircle(p.position, dx, dy) }
+    }))
+    // socket emit added in Task 8
+  }, [localId])
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!joined) return
+      const moves: Record<string, [number, number]> = {
+        ArrowUp:    [0, -STEP_SIZE],
+        ArrowDown:  [0,  STEP_SIZE],
+        ArrowLeft:  [-STEP_SIZE, 0],
+        ArrowRight: [ STEP_SIZE, 0],
+      }
+      const delta = moves[e.key]
+      if (!delta) return
+      e.preventDefault()
+      handleMove(delta[0], delta[1])
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [joined, handleMove])
 
   function handleJoin() {
     if (!roomId.trim() || !name.trim()) return
@@ -71,11 +98,11 @@ export default function App() {
       <footer className="flex items-center justify-center gap-3 px-4 py-3 border-t border-border">
         <div className="grid grid-cols-3 gap-1">
           <div />
-          <Button variant="outline" size="icon" disabled={!joined}>▲</Button>
+          <Button variant="outline" size="icon" disabled={!joined} onClick={() => handleMove(0, -STEP_SIZE)}>▲</Button>
           <div />
-          <Button variant="outline" size="icon" disabled={!joined}>◄</Button>
-          <Button variant="outline" size="icon" disabled={!joined}>▼</Button>
-          <Button variant="outline" size="icon" disabled={!joined}>►</Button>
+          <Button variant="outline" size="icon" disabled={!joined} onClick={() => handleMove(-STEP_SIZE, 0)}>◄</Button>
+          <Button variant="outline" size="icon" disabled={!joined} onClick={() => handleMove(0, STEP_SIZE)}>▼</Button>
+          <Button variant="outline" size="icon" disabled={!joined} onClick={() => handleMove(STEP_SIZE, 0)}>►</Button>
         </div>
 
         <div className="w-px h-10 bg-border mx-2" />

@@ -1,6 +1,6 @@
 import type { Participant } from '@/types'
+import { ARENA_RADIUS } from '@/lib/arena'
 
-const ARENA_RADIUS = 200
 const SVG_PADDING = 20
 const LOCAL_COLOR = '#3b82f6'
 const PEER_COLORS = ['#f97316', '#22c55e', '#a855f7', '#ec4899', '#14b8a6', '#eab308']
