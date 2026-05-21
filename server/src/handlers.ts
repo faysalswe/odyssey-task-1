@@ -55,6 +55,7 @@ export function registerHandlers(
       const transport = roomId ? roomManager.getTransport(roomId, socket.id, transportId) : undefined
       if (!transport) { callback({ error: 'transport not found' }); return }
       await transport.connect({ dtlsParameters })
+      console.log(`[connect-transport] ok ${socket.id} transport=${transportId}`)
       callback({})
     } catch (err) {
       console.error('[connect-transport]', err)
@@ -70,6 +71,7 @@ export function registerHandlers(
       const producer = await transport.produce({ kind, rtpParameters })
       roomManager.addProducer(roomId, socket.id, producer)
       socket.to(roomId).emit('new-producer', { producerId: producer.id, socketId: socket.id, kind })
+      console.log(`[produce] ok ${socket.id} kind=${kind} producer=${producer.id}`)
       callback({ id: producer.id })
     } catch (err) {
       console.error('[produce]', err)
@@ -85,6 +87,7 @@ export function registerHandlers(
       if (!router.canConsume({ producerId, rtpCapabilities })) { callback({ error: 'cannot consume' }); return }
       const consumer = await transport.consume({ producerId, rtpCapabilities, paused: false })
       roomManager.addConsumer(roomId, socket.id, consumer)
+      console.log(`[consume] ok ${socket.id} kind=${consumer.kind} consumer=${consumer.id}`)
       callback({ id: consumer.id, producerId, kind: consumer.kind, rtpParameters: consumer.rtpParameters })
     } catch (err) {
       console.error('[consume]', err)
