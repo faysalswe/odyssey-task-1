@@ -186,7 +186,10 @@ export function useMediasoup(socket: AppSocket) {
       videoProducerRef.current = producer
       setLocalVideoStream(stream)
     } catch (err) {
+      videoTrackRef.current?.stop()
+      videoTrackRef.current = null
       console.error('[produce-video]', err)
+      throw err
     }
   }, [])
 

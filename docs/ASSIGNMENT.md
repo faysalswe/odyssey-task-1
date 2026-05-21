@@ -85,3 +85,15 @@ Task 1 Deliverables
 GitHub repo — frontend + server code
 Live public URL of the frontend
 Live public URL of the server (/health must respond)
+
+# Evaluation Criteria
+
+| Area | What we look for |
+|---|---|
+| **mediasoup integration** | Audio and video work correctly, no drops |
+| **Spatial audio** | Volume changes (attentuates) realistically with distance on the map |
+| **Map UI** | Circular arena clean, dots accurate, pulse when speaking |
+| **Code quality** | TypeScript, clean structure, no prop drilling |
+| **Docker** | Single-command startup, env-driven config, health check passes |
+| **Kubernetes** | Valid manifests, all pods Running, UDP handling explained |
+| **Three.js / GLB** | Character renders, animations switch correctly |

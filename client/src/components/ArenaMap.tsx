@@ -25,7 +25,6 @@ export default function ArenaMap({ participants, localId, hearingRadius }: Props
   const local = participants.find(p => p.id === localId)
   const extent = ARENA_RADIUS + SVG_PADDING
   const viewBox = `${-extent} ${-extent} ${extent * 2} ${extent * 2}`
-  const arenaSize = ARENA_RADIUS * 2
 
   return (
     <svg viewBox={viewBox} className="w-full h-full">
@@ -35,15 +34,12 @@ export default function ArenaMap({ participants, localId, hearingRadius }: Props
           <stop offset="100%" stopColor="#0b1221" />
         </radialGradient>
         <clipPath id="arena-clip">
-          <rect x={-ARENA_RADIUS} y={-ARENA_RADIUS} width={arenaSize} height={arenaSize} />
+          <circle cx={0} cy={0} r={ARENA_RADIUS} />
         </clipPath>
       </defs>
 
-      {/* Fill entire SVG viewport so card corners stay dark */}
-      <rect x={-extent} y={-extent} width={extent * 2} height={extent * 2} fill="#0b1221" />
-
       {/* Arena background */}
-      <rect x={-ARENA_RADIUS} y={-ARENA_RADIUS} width={arenaSize} height={arenaSize} fill="url(#arena-bg)" />
+      <circle cx={0} cy={0} r={ARENA_RADIUS} fill="url(#arena-bg)" />
 
       {/* Subtle grid */}
       <g opacity={0.06} stroke="#94a3b8" strokeWidth={1} clipPath="url(#arena-clip)">
@@ -63,35 +59,37 @@ export default function ArenaMap({ participants, localId, hearingRadius }: Props
         </g>
       )}
 
-      {/* Hearing radius — soft fill + dashed ring, clipped to arena */}
+      {/* Hearing radius — radial gradient fading from strong at player to silent at edge */}
       {local && (
-        <g clipPath="url(#arena-clip)">
-          <circle
-            cx={local.position.x}
-            cy={local.position.y}
-            r={hearingRadius}
-            fill="#60a5fa"
-            fillOpacity={0.05}
-          />
-          <circle
-            cx={local.position.x}
-            cy={local.position.y}
-            r={hearingRadius}
-            fill="none"
-            stroke="#60a5fa"
-            strokeWidth={1}
-            strokeDasharray="5 5"
-            opacity={0.25}
-          />
-        </g>
+        <>
+          <defs>
+            <radialGradient
+              id="hearing-gradient"
+              cx={local.position.x}
+              cy={local.position.y}
+              r={hearingRadius}
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.28} />
+              <stop offset="100%" stopColor="#60a5fa" stopOpacity={0} />
+            </radialGradient>
+          </defs>
+          <g clipPath="url(#arena-clip)">
+            <circle
+              cx={local.position.x}
+              cy={local.position.y}
+              r={hearingRadius}
+              fill="url(#hearing-gradient)"
+            />
+          </g>
+        </>
       )}
 
       {/* Arena boundary — drawn on top so it reads as the wall */}
-      <rect
-        x={-ARENA_RADIUS}
-        y={-ARENA_RADIUS}
-        width={arenaSize}
-        height={arenaSize}
+      <circle
+        cx={0}
+        cy={0}
+        r={ARENA_RADIUS}
         fill="none"
         stroke="#60a5fa"
         strokeWidth={2}

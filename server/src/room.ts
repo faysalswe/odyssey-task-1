@@ -101,7 +101,7 @@ export class RoomManager {
     const member = this.rooms.get(roomId)?.members.get(socketId)
     if (!member) return false
     const { x, y } = position
-    if (Math.abs(x) > ARENA_RADIUS || Math.abs(y) > ARENA_RADIUS) return false
+    if (Math.sqrt(x * x + y * y) > ARENA_RADIUS) return false
     member.position = position
     return true
   }

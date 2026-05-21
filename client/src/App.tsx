@@ -8,7 +8,7 @@ import VideoTile from '@/components/VideoTile'
 import { useSocket } from '@/hooks/useSocket'
 import { useMediasoup } from '@/hooks/useMediasoup'
 import { useSpatialAudio } from '@/hooks/useSpatialAudio'
-import { clampToRect, STEP_SIZE, HEARING_RADIUS } from '@/lib/arena'
+import { clampToCircle, STEP_SIZE, HEARING_RADIUS } from '@/lib/arena'
 import { cn } from '@/lib/utils'
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Mic, MicOff, Camera, CameraOff, Copy, Check } from 'lucide-react'
 import type { Position } from '@/types'
@@ -27,6 +27,7 @@ export default function App() {
   const [cameraOn, setCameraOn] = useState(false)
   const [localPosition, setLocalPosition] = useState<Position>({ x: 0, y: 0 })
   const [copied, setCopied] = useState(false)
+  const [cameraError, setCameraError] = useState<string | null>(null)
 
   const displayParticipants = useMemo(() =>
     participants.map(p => p.id === localId ? { ...p, position: localPosition } : p),
@@ -58,7 +59,7 @@ export default function App() {
 
   const handleMove = useCallback((dx: number, dy: number) => {
     setLocalPosition(prev => {
-      const next = clampToRect(prev, dx, dy)
+      const next = clampToCircle(prev, dx, dy)
       emitMove(next)
       return next
     })
@@ -73,8 +74,21 @@ export default function App() {
 
   async function handleCameraToggle(on: boolean) {
     setCameraOn(on)
-    if (on) await produceVideo()
-    else stopVideo()
+    setCameraError(null)
+    if (on) {
+      try {
+        await produceVideo()
+      } catch (err) {
+        setCameraOn(false)
+        const msg = err instanceof DOMException && err.name === 'NotFoundError'
+          ? 'Camera not available on this device'
+          : 'Could not start camera'
+        setCameraError(msg)
+        setTimeout(() => setCameraError(null), 4000)
+      }
+    } else {
+      stopVideo()
+    }
   }
 
   useEffect(() => {
@@ -156,68 +170,80 @@ export default function App() {
       </header>
 
       {/* Main */}
-      <main className="flex flex-1 items-center justify-center gap-6 p-6 overflow-hidden">
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-[660px] h-[660px]">
-            <CardContent className="w-full h-full p-0">
-              {joined
-                ? <ArenaMap participants={displayParticipants} localId={localId} hearingRadius={HEARING_RADIUS} />
-                : (
-                  /* Join form centered in arena area */
-                  <div className="flex flex-col items-center justify-center w-full h-full gap-4 select-none">
-                    <div className="flex flex-col items-center gap-1 mb-2">
-                      <span className="text-4xl opacity-15">⬛</span>
-                      <p className="text-base font-medium text-foreground/70">Join a room</p>
-                      <p className="text-xs text-muted-foreground">Enter a room ID and your name to start</p>
-                    </div>
-                    <div className="flex flex-col gap-2 w-56">
-                      <Input
-                        placeholder="Room ID"
-                        value={roomId}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRoomId(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-                        disabled={roomFromUrl}
-                        className="h-9 bg-card border-border/60 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
-                        autoFocus={!roomFromUrl}
-                      />
-                      <Input
-                        placeholder="Your name"
-                        value={name}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-                        className="h-9 bg-card border-border/60 text-sm"
-                      />
-                      <Button
-                        onClick={handleJoin}
-                        disabled={!roomId.trim() || !name.trim()}
-                        className="h-9 w-full mt-1"
-                      >
-                        Join room
-                      </Button>
-                    </div>
-                  </div>
-                )
-              }
-            </CardContent>
-          </div>
-          {joined && (
-            <p className="text-[11px] text-muted-foreground/50 tracking-wide">
-              Arrow keys or buttons below to move
-            </p>
-          )}
-        </div>
+      <main className="flex flex-1 items-center justify-center p-6 overflow-hidden">
+        <div className="flex items-start gap-4">
 
-        {/* Video tiles */}
-        {joined && (remoteVideoStreams.size > 0 || localVideoStream) && (
-          <div className="flex flex-col gap-2 shrink-0">
-            {localVideoStream && <VideoTile stream={localVideoStream} name="You" muted />}
-            {[...remoteVideoStreams.entries()].map(([socketId, stream]) => {
-              const peer = participants.find(p => p.socketId === socketId)
-              return <VideoTile key={socketId} stream={stream} name={peer?.name} />
-            })}
+          {/* Arena column */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-[660px] h-[660px]">
+              <CardContent className="w-full h-full p-0">
+                {joined
+                  ? <ArenaMap participants={displayParticipants} localId={localId} hearingRadius={HEARING_RADIUS} />
+                  : (
+                    /* Join form centered in arena area */
+                    <div className="flex flex-col items-center justify-center w-full h-full gap-4 select-none">
+                      <div className="flex flex-col items-center gap-1 mb-2">
+                        <span className="text-4xl opacity-15">⬛</span>
+                        <p className="text-base font-medium text-foreground/70">Join a room</p>
+                        <p className="text-xs text-muted-foreground">Enter a room ID and your name to start</p>
+                      </div>
+                      <div className="flex flex-col gap-2 w-56">
+                        <Input
+                          placeholder="Room ID"
+                          value={roomId}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRoomId(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+                          disabled={roomFromUrl}
+                          className="h-9 bg-card border-border/60 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                          autoFocus={!roomFromUrl}
+                        />
+                        <Input
+                          placeholder="Your name"
+                          value={name}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+                          className="h-9 bg-card border-border/60 text-sm"
+                        />
+                        <Button
+                          onClick={handleJoin}
+                          disabled={!roomId.trim() || !name.trim()}
+                          className="h-9 w-full mt-1"
+                        >
+                          Join room
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                }
+              </CardContent>
+            </div>
+            {joined && (
+              <p className="text-[11px] text-muted-foreground/50 tracking-wide">
+                Arrow keys or buttons below to move
+              </p>
+            )}
           </div>
-        )}
+
+          {/* Video tiles column — beside arena */}
+          {joined && (remoteVideoStreams.size > 0 || localVideoStream) && (
+            <div className="flex flex-col gap-2 h-[660px] justify-center">
+              {localVideoStream && <VideoTile stream={localVideoStream} name="You" muted />}
+              {[...remoteVideoStreams.entries()].map(([socketId, stream]) => {
+                const peer = participants.find(p => p.socketId === socketId)
+                return <VideoTile key={socketId} stream={stream} name={peer?.name} />
+              })}
+            </div>
+          )}
+
+        </div>
       </main>
+
+      {/* Camera error toast */}
+      {cameraError && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-rose-950/90 border border-rose-800/60 text-rose-300 text-xs px-4 py-2 rounded-lg shadow-lg whitespace-nowrap">
+          {cameraError}
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="flex items-center justify-center gap-5 px-5 py-3 border-t border-border bg-card/60 backdrop-blur-sm shrink-0">
