@@ -29,6 +29,20 @@ export function useMediasoup(socket: AppSocket) {
       setParticipants(ps)
       const me = ps.find(p => p.socketId === socket.id)
       if (me) setLocalId(me.id)
+
+      const active = new Set(ps.map(p => p.socketId))
+
+      let audioChanged = false
+      remoteAudioStreamsRef.current.forEach((_, sid) => {
+        if (!active.has(sid)) { remoteAudioStreamsRef.current.delete(sid); audioChanged = true }
+      })
+      if (audioChanged) setRemoteAudioStreams(new Map(remoteAudioStreamsRef.current))
+
+      let videoChanged = false
+      remoteVideoStreamsRef.current.forEach((_, sid) => {
+        if (!active.has(sid)) { remoteVideoStreamsRef.current.delete(sid); videoChanged = true }
+      })
+      if (videoChanged) setRemoteVideoStreams(new Map(remoteVideoStreamsRef.current))
     }
     socket.on('room-state', onRoomState)
     return () => { socket.off('room-state', onRoomState) }

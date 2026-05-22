@@ -225,13 +225,21 @@ export default function App() {
           </div>
 
           {/* Video tiles column — beside arena */}
-          {joined && (remoteVideoStreams.size > 0 || localVideoStream) && (
+          {joined && participants.length > 0 && (
             <div className="flex flex-col gap-2 h-[660px] justify-center">
-              {localVideoStream && <VideoTile stream={localVideoStream} name="You" muted />}
-              {[...remoteVideoStreams.entries()].map(([socketId, stream]) => {
-                const peer = participants.find(p => p.socketId === socketId)
-                return <VideoTile key={socketId} stream={stream} name={peer?.name} />
-              })}
+              {/* Local tile */}
+              <VideoTile stream={localVideoStream} name="You" muted micActive={micOn} />
+              {/* Remote tiles — one per remote participant */}
+              {participants
+                .filter(p => p.id !== localId)
+                .map(p => (
+                  <VideoTile
+                    key={p.socketId}
+                    stream={remoteVideoStreams.get(p.socketId)}
+                    name={p.name}
+                    micActive={p.micActive}
+                  />
+                ))}
             </div>
           )}
 
