@@ -67,7 +67,7 @@ cd server
 fly deploy
 ```
 
-**IPv6 note:** Fly.io free tier uses a shared IPv4 address that only routes ports 80 and 443. WebRTC media requires port 10000, which is blocked on shared IPv4. The server is configured with a free dedicated IPv6 address (`2a09:8280:1::118:8439:0`) which routes all ports. Audio/video requires IPv6 connectivity on the client's network.
+**IPv6 note:** Fly.io free tier uses a shared IPv4 that only routes ports 80 and 443 — the WebRTC port (10000) is inaccessible on shared IPv4 regardless of protocol. Fixed by allocating a free dedicated IPv6 address, which routes all ports. Audio/video requires IPv6 connectivity on the client's network.
 
 ### Frontend — Cloudflare Pages
 

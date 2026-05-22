@@ -40,7 +40,6 @@ export function registerHandlers(
       transport.on('dtlsstatechange', (dtlsState) => {
         console.log(`[transport] dtls=${dtlsState} socket=${socket.id} transport=${transport.id}`)
       })
-      console.log(`[transport] ice candidates: ${JSON.stringify(transport.iceCandidates)}`)
       callback({
         id: transport.id,
         iceParameters: transport.iceParameters,

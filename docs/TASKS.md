@@ -130,14 +130,14 @@ Build a real-time spatial audio/video room: users join a room, appear as dots on
 ### Task 12 — Deploy server to Fly.io
 - [ ] Install `flyctl`, run `fly launch` inside `/server`
 - [ ] Configure `fly.toml`:
-  - Expose TCP port (e.g. `3000`) for HTTP + Socket.io
-  - Expose UDP port range (e.g. `10000–10100`) for mediasoup RTP
-- [ ] Set env vars: `ANNOUNCED_IP` (Fly machine public IP), `MEDIASOUP_MIN_PORT=10000`, `MEDIASOUP_MAX_PORT=10100`
+  - Expose TCP port `3000` for HTTP + Socket.io
+  - Expose TCP port `10000` for mediasoup WebRtcServer (single shared port)
+- [ ] Set env vars: `ANNOUNCED_IP` (use dedicated IPv6 — Fly.io shared IPv4 only routes ports 80/443, making the WebRTC port inaccessible), `WEBRTC_SERVER_PORT=10000`
 - [ ] `fly deploy` and verify `GET https://<app>.fly.dev/health` returns `200 OK`
 
 ---
 
-### Task 13 — Deploy frontend to Netlify / Vercel / Cloudflare Pages
+### Task 13 — Deploy frontend to Cloudflare Pages
 - [ ] Set `VITE_SERVER_URL=https://<app>.fly.dev` in the platform env vars
 - [ ] Run `npm run build` to generate `/client/dist`
 - [ ] Deploy `/client/dist` to chosen platform
