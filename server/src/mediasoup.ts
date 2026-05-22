@@ -28,7 +28,7 @@ export async function createWorker(): Promise<types.Worker> {
   const worker = await mediasoup.createWorker()
   const webRtcServer = await worker.createWebRtcServer({
     listenInfos: [
-      { protocol: 'tcp', ip: '0.0.0.0', announcedIp: ANNOUNCED_IP, port: WEBRTC_SERVER_PORT },
+      { protocol: 'tcp', ip: '::', announcedIp: ANNOUNCED_IP, port: WEBRTC_SERVER_PORT },
     ],
   })
   webRtcServers.set(worker.pid, webRtcServer)

@@ -37,6 +37,10 @@ export function registerHandlers(
       const room = await roomManager.getOrCreate(roomId, worker)
       const transport = await createWebRtcTransport(room.router, worker)
       roomManager.addTransport(roomId, socket.id, transport)
+      transport.on('dtlsstatechange', (dtlsState) => {
+        console.log(`[transport] dtls=${dtlsState} socket=${socket.id} transport=${transport.id}`)
+      })
+      console.log(`[transport] ice candidates: ${JSON.stringify(transport.iceCandidates)}`)
       callback({
         id: transport.id,
         iceParameters: transport.iceParameters,
